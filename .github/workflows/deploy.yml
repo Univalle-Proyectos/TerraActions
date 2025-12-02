@@ -13,11 +13,14 @@ jobs:
   test_application:
     name: "Ejecutar pruebas automatizadas"
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPA_ANON_KEY: ${{ secrets.SUPA_ANON_KEY }}
 
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["18.x", "20.x"]
+        node-version: ["20.x"]
 
     steps:
       - name: Checkout repository
