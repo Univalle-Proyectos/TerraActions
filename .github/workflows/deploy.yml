@@ -14,7 +14,7 @@ jobs:
     name: "Ejecutar pruebas automatizadas"
     runs-on: ubuntu-latest
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPA_BASE_URL: ${{ secrets.SUPA_BASE_URL }}
       SUPA_ANON_KEY: ${{ secrets.SUPA_ANON_KEY }}
 
     strategy:
@@ -34,6 +34,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check environment variables
+        run: |
+          echo "SUPA_BASE_URL: $SUPA_BASE_URL"
+          echo "SUPA_ANON_KEY: ${SUPA_ANON_KEY:0:5}..."  # Muestra solo los primeros 5 caracteres por seguridad
 
       - name: Run tests with Vitest
         run: |
