@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { supabase } from "../src/Config/supabase";
 import { Cliente } from "../Models/Cliente";
-import { PersonaFunc, Persona } from "../Models/Persona";
+import { PersonaFunc } from "../Models/Persona";
 
 export class SignupController {
   static async signUp(req: Request, res: Response): Promise<void> {
@@ -19,6 +19,7 @@ export class SignupController {
       usuario: req.body.usuario,
       password: req.body.password
     };
+
     if (!personaData.nombre || !personaData.apellido || !personaData.email || 
         !clienteData.ci_cliente || !clienteData.usuario || !clienteData.password) {
       res.status(400).json({ error: "Faltan datos obligatorios" });
@@ -26,6 +27,28 @@ export class SignupController {
     }
 
     try {
+      const { data: existeCI } = await supabase
+        .from("cliente")
+        .select("ci_cliente")
+        .eq("ci_cliente", clienteData.ci_cliente)
+        .single();
+
+      if (existeCI) {
+        res.status(400).json({ error: "El CI del cliente ya existe" });
+        return;
+      }
+
+      const { data: existeUsuario } = await supabase
+        .from("cliente")
+        .select("usuario")
+        .eq("usuario", clienteData.usuario)
+        .single();
+
+      if (existeUsuario) {
+        res.status(400).json({ error: "El nombre de usuario ya existe" });
+        return;
+      }
+
       const { data: newPersona, error: personaError } = await supabase
         .from("persona")
         .insert(personaData)
@@ -33,53 +56,31 @@ export class SignupController {
         .single();
 
       if (personaError || !newPersona) {
-        console.error("Error en inserción de persona:", personaError);
-        res.status(400).json({ 
-          error: "Error al crear persona",
-          details: personaError?.message || "No se devolvieron datos"
-        });
+        res.status(400).json({ error: "Error al crear persona", details: personaError?.message || "No se devolvieron datos" });
         return;
       }
-      const completeClienteData: Cliente = {
-        ...clienteData,
-        idPersona: newPersona.id_persona
-      };
 
       const { data: newCliente, error: clienteError } = await supabase
         .from("cliente")
         .insert({
-          ci_cliente: completeClienteData.ci_cliente,
-          id_persona: completeClienteData.idPersona,
-          usuario: completeClienteData.usuario,
-          password: completeClienteData.password
+          ci_cliente: clienteData.ci_cliente,
+          id_persona: newPersona.id_persona,
+          usuario: clienteData.usuario,
+          password: clienteData.password
         })
         .select()
         .single();
 
       if (clienteError || !newCliente) {
-        await supabase
-          .from("persona")
-          .delete()
-          .eq("id_persona", newPersona.id_persona);
-
-        res.status(400).json({ 
-          error: "El nombre del usuario ya existe intente nuevamente",
-          details: clienteError?.message || "No se devolvieron datos"
-        });
+        await supabase.from("persona").delete().eq("id_persona", newPersona.id_persona);
+        res.status(400).json({ error: "Error al crear cliente", details: clienteError?.message || "No se devolvieron datos" });
         return;
       }
-      res.status(201).json({ 
-        message: "Cliente creado exitosamente",
-        cliente: newCliente,
-        persona: newPersona
-      });
+
+      res.status(201).json({ message: "Cliente creado exitosamente", cliente: newCliente, persona: newPersona });
 
     } catch (error) {
-      console.error("Error en el servidor:", error);
-      res.status(500).json({ 
-        error: "Error en el servidor",
-        details: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ error: "Error en el servidor", details: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -87,19 +88,12 @@ export class SignupController {
     try {
       const { data, error } = await supabase
         .from("cliente")
-        .select(`
-          *,
-          persona: id_persona (*)
-        `);
+        .select(`*, persona: id_persona (*)`);
 
       if (error) throw error;
       res.status(200).json(data);
     } catch (e) {
-      console.error("Error al obtener clientes:", e);
-      res.status(500).json({ 
-        error: "Fallo al obtener clientes",
-        details: e instanceof Error ? e.message : String(e)
-      });
+      res.status(500).json({ error: "Fallo al obtener clientes", details: e instanceof Error ? e.message : String(e) });
     }
   }
 }

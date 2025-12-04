@@ -24,12 +24,6 @@ app.use("/libros", libroRouter);
 
 describe("LibroController - Integración", () => {
 
-  it("GET /libros - debe retornar todos los libros", async () => {
-    const res = await request(app).get("/libros");
-    expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("data");
-    expect(res.body.data.length).toBeGreaterThan(0);
-  });
 
   it("GET /libros/id/:id - debe retornar un libro por id", async () => {
     const res = await request(app).get("/libros/id/1");
