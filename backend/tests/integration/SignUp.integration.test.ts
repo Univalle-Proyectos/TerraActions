@@ -1,49 +1,54 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
 import { supabase } from "../../src/Config/supabase";
+import { randomUUID } from "crypto";
 
 describe("SignupController - Integration Tests", () => {
+  // Generate unique identifiers for this test run to avoid conflicts
+  const testId = randomUUID().slice(0, 8);
+  
   const testUser = {
     nombre: "Carlos",
     apellido: "González",
-    email: "carlos.test@example.com",
+    email: `carlos.test.${testId}@example.com`,
     telefono: "77777777",
     direccion: "Av. Test 456",
     genero: "M",
-    ci_cliente: "9999999",
-    usuario: "carlostest",
+    ci_cliente: `9999${testId.slice(0, 4)}`,
+    usuario: `carlostest_${testId}`,
     password: "test123456",
   };
 
-  let createdPersonaId: number;
-  let createdClienteCI: string;
+  let createdPersonaId: number | null = null;
+  let createdClienteCI: string | null = null;
 
   beforeAll(async () => {
-    await cleanupTestData();
+    // Clean up any existing test data before starting
+    await cleanupTestData(testUser.ci_cliente, testUser.usuario, testUser.email);
   });
 
   afterAll(async () => {
-    await cleanupTestData();
+    // Clean up after all tests complete
+    if (createdClienteCI) {
+      await cleanupTestData(createdClienteCI, testUser.usuario, testUser.email);
+    }
   });
 
-  beforeEach(async () => {
-    await cleanupTestData();
-  });
-
-  async function cleanupTestData() {
+  async function cleanupTestData(ci: string, usuario: string, email: string) {
     try {
+      // Delete cliente first (child record)
       const { data: cliente } = await supabase
         .from("cliente")
         .select("id_persona")
-        .eq("ci_cliente", testUser.ci_cliente)
-        .single();
+        .eq("ci_cliente", ci)
+        .maybeSingle();
 
       if (cliente) {
         await supabase
           .from("cliente")
           .delete()
-          .eq("ci_cliente", testUser.ci_cliente);
+          .eq("ci_cliente", ci);
 
         await supabase
           .from("persona")
@@ -51,17 +56,46 @@ describe("SignupController - Integration Tests", () => {
           .eq("id_persona", cliente.id_persona);
       }
 
-      await supabase
+      // Clean up by usuario
+      const { data: clienteByUsuario } = await supabase
         .from("cliente")
-        .delete()
-        .eq("usuario", testUser.usuario);
+        .select("id_persona")
+        .eq("usuario", usuario)
+        .maybeSingle();
 
-      await supabase
+      if (clienteByUsuario) {
+        await supabase
+          .from("cliente")
+          .delete()
+          .eq("usuario", usuario);
+
+        await supabase
+          .from("persona")
+          .delete()
+          .eq("id_persona", clienteByUsuario.id_persona);
+      }
+
+      // Clean up by email
+      const { data: personaByEmail } = await supabase
         .from("persona")
-        .delete()
-        .eq("email", testUser.email);
+        .select("id_persona")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (personaByEmail) {
+        await supabase
+          .from("cliente")
+          .delete()
+          .eq("id_persona", personaByEmail.id_persona);
+
+        await supabase
+          .from("persona")
+          .delete()
+          .eq("id_persona", personaByEmail.id_persona);
+      }
     } catch (error) {
-      console.log("Cleanup error (expected on first run):", error);
+      // Ignore cleanup errors on first run
+      console.log("Cleanup warning:", error);
     }
   }
 
@@ -82,6 +116,7 @@ describe("SignupController - Integration Tests", () => {
       createdPersonaId = response.body.persona.id_persona;
       createdClienteCI = response.body.cliente.ci_cliente;
 
+      // Verify in database
       const { data: personaDB } = await supabase
         .from("persona")
         .select("*")
@@ -103,7 +138,13 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el nombre", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        ci_cliente: `8888${uniqueId.slice(0, 4)}`,
+        usuario: `user_${uniqueId}`,
+        email: `test.${uniqueId}@example.com`
+      };
       delete invalidUser.nombre;
 
       const response = await request(app)
@@ -115,7 +156,13 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el apellido", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        ci_cliente: `8889${uniqueId.slice(0, 4)}`,
+        usuario: `user_${uniqueId}`,
+        email: `test.${uniqueId}@example.com`
+      };
       delete invalidUser.apellido;
 
       const response = await request(app)
@@ -127,7 +174,12 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el email", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        ci_cliente: `8890${uniqueId.slice(0, 4)}`,
+        usuario: `user_${uniqueId}`,
+      };
       delete invalidUser.email;
 
       const response = await request(app)
@@ -139,7 +191,12 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el ci_cliente", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        usuario: `user_${uniqueId}`,
+        email: `test.${uniqueId}@example.com`
+      };
       delete invalidUser.ci_cliente;
 
       const response = await request(app)
@@ -151,7 +208,12 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el usuario", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        ci_cliente: `8891${uniqueId.slice(0, 4)}`,
+        email: `test.${uniqueId}@example.com`
+      };
       delete invalidUser.usuario;
 
       const response = await request(app)
@@ -163,7 +225,13 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando falta el password", async () => {
-      const invalidUser: any = { ...testUser };
+      const uniqueId = randomUUID().slice(0, 8);
+      const invalidUser: any = { 
+        ...testUser,
+        ci_cliente: `8892${uniqueId.slice(0, 4)}`,
+        usuario: `user_${uniqueId}`,
+        email: `test.${uniqueId}@example.com`
+      };
       delete invalidUser.password;
 
       const response = await request(app)
@@ -175,15 +243,25 @@ describe("SignupController - Integration Tests", () => {
     });
 
     it("debe retornar error 400 cuando el CI ya existe", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
+      const firstUser = {
+        ...testUser,
+        ci_cliente: `7777${uniqueId.slice(0, 4)}`,
+        usuario: `first_${uniqueId}`,
+        email: `first.${uniqueId}@example.com`,
+      };
+
+      // Create first user
       await request(app)
         .post("/api/signup")
-        .send(testUser)
+        .send(firstUser)
         .expect(201);
 
+      // Try to create duplicate with same CI
       const duplicateUser = {
-        ...testUser,
-        email: "otro@example.com",
-        usuario: "otrousuario",
+        ...firstUser,
+        email: `second.${uniqueId}@example.com`,
+        usuario: `second_${uniqueId}`,
       };
 
       const response = await request(app)
@@ -192,18 +270,31 @@ describe("SignupController - Integration Tests", () => {
         .expect(400);
 
       expect(response.body).toHaveProperty("error", "El CI del cliente ya existe");
+
+      // Cleanup
+      await cleanupTestData(firstUser.ci_cliente, firstUser.usuario, firstUser.email);
     });
 
     it("debe retornar error 400 cuando el usuario ya existe", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
+      const firstUser = {
+        ...testUser,
+        ci_cliente: `6666${uniqueId.slice(0, 4)}`,
+        usuario: `duplicate_${uniqueId}`,
+        email: `first.${uniqueId}@example.com`,
+      };
+
+      // Create first user
       await request(app)
         .post("/api/signup")
-        .send(testUser)
+        .send(firstUser)
         .expect(201);
 
+      // Try to create duplicate with same username
       const duplicateUser = {
-        ...testUser,
-        ci_cliente: "8888888",
-        email: "otro@example.com",
+        ...firstUser,
+        ci_cliente: `5555${uniqueId.slice(0, 4)}`,
+        email: `second.${uniqueId}@example.com`,
       };
 
       const response = await request(app)
@@ -212,11 +303,16 @@ describe("SignupController - Integration Tests", () => {
         .expect(400);
 
       expect(response.body).toHaveProperty("error", "El nombre de usuario ya existe");
+
+      // Cleanup
+      await cleanupTestData(firstUser.ci_cliente, firstUser.usuario, firstUser.email);
     });
 
     it("debe manejar correctamente el rollback cuando falla la creación del cliente", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
       const invalidClienteData = {
         ...testUser,
+        email: `rollback.${uniqueId}@example.com`,
         ci_cliente: undefined,
       };
 
@@ -227,10 +323,11 @@ describe("SignupController - Integration Tests", () => {
 
       expect(response.body).toHaveProperty("error");
 
+      // Verify no persona was created
       const { data: personaCheck } = await supabase
         .from("persona")
         .select("*")
-        .eq("email", testUser.email)
+        .eq("email", invalidClienteData.email)
         .maybeSingle();
 
       expect(personaCheck).toBeNull();
@@ -239,9 +336,18 @@ describe("SignupController - Integration Tests", () => {
 
   describe("GET /api/signup", () => {
     it("debe obtener todos los clientes con sus datos de persona", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
+      const getTestUser = {
+        ...testUser,
+        ci_cliente: `4444${uniqueId.slice(0, 4)}`,
+        usuario: `gettest_${uniqueId}`,
+        email: `gettest.${uniqueId}@example.com`,
+      };
+
+      // Create a user first
       await request(app)
         .post("/api/signup")
-        .send(testUser)
+        .send(getTestUser)
         .expect(201);
 
       const response = await request(app)
@@ -252,18 +358,19 @@ describe("SignupController - Integration Tests", () => {
       expect(response.body.length).toBeGreaterThan(0);
 
       const clienteCreado = response.body.find(
-        (c: any) => c.ci_cliente === testUser.ci_cliente
+        (c: any) => c.ci_cliente === getTestUser.ci_cliente
       );
 
       expect(clienteCreado).toBeTruthy();
       expect(clienteCreado).toHaveProperty("persona");
-      expect(clienteCreado.persona.nombre).toBe(testUser.nombre);
-      expect(clienteCreado.persona.email).toBe(testUser.email);
+      expect(clienteCreado.persona.nombre).toBe(getTestUser.nombre);
+      expect(clienteCreado.persona.email).toBe(getTestUser.email);
+
+      // Cleanup
+      await cleanupTestData(getTestUser.ci_cliente, getTestUser.usuario, getTestUser.email);
     });
 
-    it("debe retornar un array cuando no hay clientes", async () => {
-      await cleanupTestData();
-
+    it("debe retornar un array vacío o con datos cuando se consulta", async () => {
       const response = await request(app)
         .get("/api/signup")
         .expect(200);
@@ -274,9 +381,17 @@ describe("SignupController - Integration Tests", () => {
 
   describe("Validación de integridad de datos", () => {
     it("debe mantener la relación entre persona y cliente", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
+      const relationUser = {
+        ...testUser,
+        ci_cliente: `3333${uniqueId.slice(0, 4)}`,
+        usuario: `relation_${uniqueId}`,
+        email: `relation.${uniqueId}@example.com`,
+      };
+
       const response = await request(app)
         .post("/api/signup")
-        .send(testUser)
+        .send(relationUser)
         .expect(201);
 
       const personaId = response.body.persona.id_persona;
@@ -292,12 +407,23 @@ describe("SignupController - Integration Tests", () => {
       expect(cliente.id_persona).toBe(personaId);
       expect(cliente.persona).toBeTruthy();
       expect(cliente.persona.id_persona).toBe(personaId);
+
+      // Cleanup
+      await cleanupTestData(relationUser.ci_cliente, relationUser.usuario, relationUser.email);
     });
 
     it("debe crear registros con los datos correctos en ambas tablas", async () => {
+      const uniqueId = randomUUID().slice(0, 8);
+      const dataUser = {
+        ...testUser,
+        ci_cliente: `2222${uniqueId.slice(0, 4)}`,
+        usuario: `data_${uniqueId}`,
+        email: `data.${uniqueId}@example.com`,
+      };
+
       const response = await request(app)
         .post("/api/signup")
-        .send(testUser)
+        .send(dataUser)
         .expect(201);
 
       const personaId = response.body.persona.id_persona;
@@ -308,23 +434,26 @@ describe("SignupController - Integration Tests", () => {
         .eq("id_persona", personaId)
         .single();
 
-      expect(persona.nombre).toBe(testUser.nombre);
-      expect(persona.apellido).toBe(testUser.apellido);
-      expect(persona.email).toBe(testUser.email);
-      expect(persona.telefono).toBe(testUser.telefono);
-      expect(persona.direccion).toBe(testUser.direccion);
-      expect(persona.genero).toBe(testUser.genero);
+      expect(persona.nombre).toBe(dataUser.nombre);
+      expect(persona.apellido).toBe(dataUser.apellido);
+      expect(persona.email).toBe(dataUser.email);
+      expect(persona.telefono).toBe(dataUser.telefono);
+      expect(persona.direccion).toBe(dataUser.direccion);
+      expect(persona.genero).toBe(dataUser.genero);
 
       const { data: cliente } = await supabase
         .from("cliente")
         .select("*")
-        .eq("ci_cliente", testUser.ci_cliente)
+        .eq("ci_cliente", dataUser.ci_cliente)
         .single();
 
-      expect(cliente.ci_cliente).toBe(testUser.ci_cliente);
-      expect(cliente.usuario).toBe(testUser.usuario);
-      expect(cliente.password).toBe(testUser.password);
+      expect(cliente.ci_cliente).toBe(dataUser.ci_cliente);
+      expect(cliente.usuario).toBe(dataUser.usuario);
+      expect(cliente.password).toBe(dataUser.password);
       expect(cliente.id_persona).toBe(personaId);
+
+      // Cleanup
+      await cleanupTestData(dataUser.ci_cliente, dataUser.usuario, dataUser.email);
     });
   });
 });
