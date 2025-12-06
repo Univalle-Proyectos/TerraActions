@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { supabase } from "../src/Config/supabase";
-import { ReservaFunc } from "../Models/Reserva";
 
 export class ReservaController {
     static async getReservas(req: Request, res: Response): Promise<void> {
@@ -9,7 +8,6 @@ export class ReservaController {
             if (error) throw error;
             res.status(200).json(data);
         } catch (e) {
-            console.error(e);
             res.status(500).json({ error: "Fallo al obtener reservas" });
         }
     }
@@ -46,14 +44,15 @@ export class ReservaController {
                 .from('reserva')
                 .insert({
                     fec_reserva: new Date(),
-                    fec_prestamo:new Date(),
-                    fec_limite:new Date()
+                    fec_prestamo: new Date(),
+                    fec_limite: new Date()
                 })
                 .select('id_reserva')
                 .single();
 
             if (errorReserva) throw errorReserva;
             const id_reserva = nuevaReserva.id_reserva;
+
             const { error: errorDetalle } = await supabase
                 .from('detalle_reserva')
                 .insert({
@@ -62,34 +61,27 @@ export class ReservaController {
                 });
 
             if (errorDetalle) throw errorDetalle;
+
             const { error: errorUpdateStock } = await supabase
                 .from('stock')
-                .update({
-                    disponibilidad: false,
-                })
+                .update({ disponibilidad: false })
                 .eq('id_stock', id_stock);
 
             if (errorUpdateStock) throw errorUpdateStock;
+
             const { error: errorCliMulRes } = await supabase
                 .from('cli_mul_res')
-                .insert({
-                    ci_cliente,
-                    id_reserva
-                });
+                .insert({ ci_cliente, id_reserva });
 
             if (errorCliMulRes) throw errorCliMulRes;
+
             res.status(201).json({
                 success: true,
                 message: 'Reserva creada exitosamente',
-                data: {
-                    id_reserva,
-                    id_libro,
-                    ci_cliente
-                }
+                data: { id_reserva, id_libro, ci_cliente }
             });
 
         } catch (error) {
-            console.error('Error en crearReservaDirecta:', error);
             res.status(500).json({
                 success: false,
                 message: 'Error al crear la reserva',
@@ -110,7 +102,7 @@ export class ReservaController {
             res.status(200).json({
                 success: true,
                 count: data.length,
-                data: data
+                data
             });
         } catch (error) {
             res.status(500).json({
@@ -120,5 +112,4 @@ export class ReservaController {
             });
         }
     }
-
 }

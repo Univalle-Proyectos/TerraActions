@@ -5,7 +5,6 @@ import { supabase } from "../../src/Config/supabase";
 import { randomUUID } from "crypto";
 
 describe("SignupController - Integration Tests", () => {
-  // Generate unique identifiers for this test run to avoid conflicts
   const testId = randomUUID().slice(0, 8);
   
   const testUser = {
@@ -24,12 +23,10 @@ describe("SignupController - Integration Tests", () => {
   let createdClienteCI: string | null = null;
 
   beforeAll(async () => {
-    // Clean up any existing test data before starting
     await cleanupTestData(testUser.ci_cliente, testUser.usuario, testUser.email);
   });
 
   afterAll(async () => {
-    // Clean up after all tests complete
     if (createdClienteCI) {
       await cleanupTestData(createdClienteCI, testUser.usuario, testUser.email);
     }
@@ -37,7 +34,6 @@ describe("SignupController - Integration Tests", () => {
 
   async function cleanupTestData(ci: string, usuario: string, email: string) {
     try {
-      // Delete cliente first (child record)
       const { data: cliente } = await supabase
         .from("cliente")
         .select("id_persona")
@@ -56,7 +52,6 @@ describe("SignupController - Integration Tests", () => {
           .eq("id_persona", cliente.id_persona);
       }
 
-      // Clean up by usuario
       const { data: clienteByUsuario } = await supabase
         .from("cliente")
         .select("id_persona")
@@ -75,7 +70,6 @@ describe("SignupController - Integration Tests", () => {
           .eq("id_persona", clienteByUsuario.id_persona);
       }
 
-      // Clean up by email
       const { data: personaByEmail } = await supabase
         .from("persona")
         .select("id_persona")
@@ -94,7 +88,6 @@ describe("SignupController - Integration Tests", () => {
           .eq("id_persona", personaByEmail.id_persona);
       }
     } catch (error) {
-      // Ignore cleanup errors on first run
       console.log("Cleanup warning:", error);
     }
   }
@@ -116,7 +109,6 @@ describe("SignupController - Integration Tests", () => {
       createdPersonaId = response.body.persona.id_persona;
       createdClienteCI = response.body.cliente.ci_cliente;
 
-      // Verify in database
       const { data: personaDB } = await supabase
         .from("persona")
         .select("*")
@@ -251,13 +243,11 @@ describe("SignupController - Integration Tests", () => {
         email: `first.${uniqueId}@example.com`,
       };
 
-      // Create first user
       await request(app)
         .post("/api/signup")
         .send(firstUser)
         .expect(201);
 
-      // Try to create duplicate with same CI
       const duplicateUser = {
         ...firstUser,
         email: `second.${uniqueId}@example.com`,
@@ -271,7 +261,6 @@ describe("SignupController - Integration Tests", () => {
 
       expect(response.body).toHaveProperty("error", "El CI del cliente ya existe");
 
-      // Cleanup
       await cleanupTestData(firstUser.ci_cliente, firstUser.usuario, firstUser.email);
     });
 
@@ -284,13 +273,11 @@ describe("SignupController - Integration Tests", () => {
         email: `first.${uniqueId}@example.com`,
       };
 
-      // Create first user
       await request(app)
         .post("/api/signup")
         .send(firstUser)
         .expect(201);
 
-      // Try to create duplicate with same username
       const duplicateUser = {
         ...firstUser,
         ci_cliente: `5555${uniqueId.slice(0, 4)}`,
@@ -304,7 +291,6 @@ describe("SignupController - Integration Tests", () => {
 
       expect(response.body).toHaveProperty("error", "El nombre de usuario ya existe");
 
-      // Cleanup
       await cleanupTestData(firstUser.ci_cliente, firstUser.usuario, firstUser.email);
     });
 
@@ -323,7 +309,6 @@ describe("SignupController - Integration Tests", () => {
 
       expect(response.body).toHaveProperty("error");
 
-      // Verify no persona was created
       const { data: personaCheck } = await supabase
         .from("persona")
         .select("*")
@@ -344,7 +329,6 @@ describe("SignupController - Integration Tests", () => {
         email: `gettest.${uniqueId}@example.com`,
       };
 
-      // Create a user first
       await request(app)
         .post("/api/signup")
         .send(getTestUser)
@@ -366,7 +350,6 @@ describe("SignupController - Integration Tests", () => {
       expect(clienteCreado.persona.nombre).toBe(getTestUser.nombre);
       expect(clienteCreado.persona.email).toBe(getTestUser.email);
 
-      // Cleanup
       await cleanupTestData(getTestUser.ci_cliente, getTestUser.usuario, getTestUser.email);
     });
 
@@ -408,7 +391,6 @@ describe("SignupController - Integration Tests", () => {
       expect(cliente.persona).toBeTruthy();
       expect(cliente.persona.id_persona).toBe(personaId);
 
-      // Cleanup
       await cleanupTestData(relationUser.ci_cliente, relationUser.usuario, relationUser.email);
     });
 
@@ -452,7 +434,6 @@ describe("SignupController - Integration Tests", () => {
       expect(cliente.password).toBe(dataUser.password);
       expect(cliente.id_persona).toBe(personaId);
 
-      // Cleanup
       await cleanupTestData(dataUser.ci_cliente, dataUser.usuario, dataUser.email);
     });
   });

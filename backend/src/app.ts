@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 
 import multaRouter from '../Routes/MultaRouter';
-import reservaRouter from '../Routes/ReservaRouter';
+import ReservaRouter from '../Routes/ReservaRouter';
 import autorRouter from '../Routes/AutorRouter';
 import personaRouter from '../Routes/PersonaRoutes';
 import authRouter from '../Routes/authRouter';
@@ -43,7 +43,7 @@ app.use((req, _res, next) => {
 
 app.use('/api/persona', personaRouter);
 app.use('/api/multa', multaRouter);
-app.use('/api/reserva', reservaRouter);
+app.use('/api/reserva', ReservaRouter);
 app.use('/api/administrador', administradorRouter);
 app.use('/api/cliente', clienteRouter);
 app.use('/api/autor', autorRouter);
