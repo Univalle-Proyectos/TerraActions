@@ -121,8 +121,9 @@ export class ReservaController {
                 message: 'Error al obtener libros disponibles',
                 error: error instanceof Error ? error.message : 'Error desconocido'
             });
+            
         }
-        
+
 
     }
 
