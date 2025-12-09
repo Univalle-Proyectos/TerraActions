@@ -4,6 +4,7 @@ import { Cliente } from '../Models/Cliente';
 import { generateToken } from '../src/utils/jwt';
 
 
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { usuario, password } = req.body;
