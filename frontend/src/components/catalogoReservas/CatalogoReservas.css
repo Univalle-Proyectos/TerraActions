@@ -20,7 +20,7 @@
   min-height: 100vh;
 }
 
-
+/* HEADER */
 .header-section {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -54,6 +54,7 @@
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 .loading p { font-size: 1.3rem; color: var(--white); margin: 0; font-weight: 300; }
 
+/* FILTROS */
 .filtros-container {
   background: rgba(42, 32, 50, 0.8); backdrop-filter: blur(10px);
   border-radius: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -95,7 +96,7 @@
 .reset-btn.disabled { background: rgba(255, 255, 255, 0.1); cursor: not-allowed; box-shadow: none; color: rgba(255, 255, 255, 0.4); }
 .btn-icon { margin-right: 0.5rem; font-size: 1.2rem; font-weight: bold; }
 
-
+/* MENSAJES */
 .error-container, .success-container {
   display: flex; align-items: center; justify-content: center;
   padding: 1.5rem 2rem; margin-bottom: 2rem; border-radius: 12px;
@@ -105,20 +106,23 @@
 .success-container { background: rgba(46, 125, 50, 0.15); border: 1px solid rgba(76, 175, 80, 0.3); color: #a5d6a7; }
 .error-icon, .success-icon { font-size: 1.5rem; margin-right: 1rem; }
 
-
+/* --- GRILLA Y CONTENIDO --- */
 .results-section { margin-top: 2rem; }
 .results-header { margin-bottom: 2rem; padding: 0 0.5rem; }
 .results-count { color: var(--white); font-size: 1.3rem; font-weight: 600; margin: 0; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
 
-
+/* Grilla Base (Escritorio) */
 .libros-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 2.5rem; padding: 1rem 0 3rem 0;
+  
+  /* ALINEACIÓN CORRECTA: */
   justify-items: center;
+  align-items: stretch; /* Asegura que todas las tarjetas de la fila tengan la misma altura */
 }
 
-
+/* Contenedor de la Tarjeta */
 .libro-card-container {
   position: relative;
   transition: all 0.3s ease;
@@ -126,11 +130,20 @@
   display: flex;
   flex-direction: column; 
   align-items: center;
-  height: auto; 
+  /* Altura 100% para llenar la celda */
+  height: 100%; 
+  margin: 0; /* Asegurar sin márgenes extraños */
 }
 .libro-card-container:hover { transform: translateY(-5px); }
 
+/* IMPORTANTE: Hacer que la tarjeta interna también llene el alto */
+.libro-card-container .libro-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
+/* BOTÓN DE RESERVAR (Escritorio: Flotante) */
 .reservar-btn {
   position: absolute; 
   bottom: -1.5rem;
@@ -149,7 +162,7 @@
 }
 .reservar-btn:disabled { background: rgba(255, 255, 255, 0.1); cursor: not-allowed; box-shadow: none; color: rgba(255, 255, 255, 0.4); }
 
-
+/* No Results */
 .no-results {
   grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 4rem 2rem; text-align: center; background: rgba(42, 32, 50, 0.6);
@@ -159,7 +172,7 @@
 .no-results h3 { color: var(--white); font-size: 1.8rem; margin-bottom: 0.5rem; }
 .no-results p { color: var(--gray); margin: 0; font-size: 1.1rem; }
 
-
+/* --- RESPONSIVE --- */
 
 @media (max-width: 1024px) {
   .filtros-content { grid-template-columns: 1fr 1fr; gap: 2rem; }
@@ -171,43 +184,51 @@
   .catalog-title { font-size: 2.5rem; }
   .filtros-content { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.5rem; }
   .reset-btn { justify-self: stretch; max-width: none; width: 100%; }
+  .modal-content { padding: 1.5rem; }
+  .modal-header h3 { font-size: 1.5rem; }
 }
 
-
+/* --- MÓVIL OPTIMIZADO (< 640px) --- */
 @media (max-width: 640px) {
   .catalog-title { font-size: 2rem; }
   .filtros-content { padding: 1.2rem; gap: 1rem; }
   .input-field, .select-field { padding: 10px; font-size: 14px; }
   .reset-btn { padding: 10px; height: 44px; font-size: 14px; }
 
-
+  /* GRILLA 2 COLUMNAS ESTRICTA */
   .libros-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 15px; 
+    gap: 15px;
     padding-bottom: 1rem;
+    align-items: stretch; /* Todas las celdas misma altura */
   }
 
+  /* FORZAR ALTURA EN EL CONTENEDOR MÓVIL */
+  .libro-card-container {
+    height: 100%; /* Llenar la celda de arriba a abajo */
+    margin: 0; /* Sin márgenes extraños */
+    justify-content: space-between; /* Botón al final */
+  }
 
+  /* Tarjeta interna llena el espacio disponible */
   .libro-card-container .libro-card {
-    height: auto !important; 
-    flex-grow: 0; 
+    height: auto !important; /* Dejar que flexbox decida */
+    flex-grow: 1; /* Ocupar todo el espacio menos el botón */
+    width: 100%;
   }
 
-
+  /* ARREGLO DEL BOTÓN */
   .reservar-btn {
     position: static !important; 
     transform: none !important;
-    
-
     width: 100%;
     min-width: 0;
-    margin-top: 10px;
+    margin-top: 10px; /* Separación consistente del libro */
     padding: 8px 4px;
     font-size: 0.8rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
-
 
   .reservar-btn:hover:not(:disabled) {
     transform: none !important;
@@ -215,27 +236,19 @@
   }
 }
 
-
+/* MODAL Y FORMULARIO */
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
   display: flex; justify-content: center; align-items: center;
- 
-  z-index: 4000; 
-  animation: fadeIn 0.3s ease;
-  padding: 20px;
+  z-index: 4000; animation: fadeIn 0.3s ease; padding: 20px;
 }
 
 .modal-content {
   background: linear-gradient(135deg, var(--color3) 0%, var(--black) 100%);
-  border-radius: 20px; 
-  width: 100%; 
-  max-width: 500px; 
-  padding: 2rem;
-  box-shadow: 0 12px 40px rgba(110, 198, 255, 0.3); 
-  border: 1px solid rgba(110, 198, 255, 0.2);
-  animation: slideUp 0.4s ease;
-  position: relative;
+  border-radius: 20px; width: 100%; max-width: 500px; padding: 2rem;
+  box-shadow: 0 12px 40px rgba(110, 198, 255, 0.3); border: 1px solid rgba(110, 198, 255, 0.2);
+  animation: slideUp 0.4s ease; position: relative;
 }
 
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
@@ -251,38 +264,28 @@
 }
 .close-btn:hover { color: var(--color2); transform: rotate(90deg); }
 
-
 .fecha-input-group { margin-bottom: 1.5rem; }
 .fecha-input-group label { display: block; color: var(--white); margin-bottom: 0.5rem; font-weight: 600; }
 
 .react-datepicker-wrapper { width: 100% !important; display: block !important; }
 .react-datepicker__input-container { width: 100% !important; display: block !important; }
 
-
-.date-picker-input, 
-.react-datepicker__input-container input {
-  width: 100% !important; 
-  padding: 14px 18px !important;
+.date-picker-input, .react-datepicker__input-container input {
+  width: 100% !important; padding: 14px 18px !important;
   background: rgba(0, 0, 0, 0.4) !important;
   border: 2px solid rgba(110, 198, 255, 0.3) !important;
-  border-radius: 12px !important; 
-  color: var(--white) !important; 
-  font-size: 1rem !important;
-  box-sizing: border-box !important;
+  border-radius: 12px !important; color: var(--white) !important; 
+  font-size: 1rem !important; box-sizing: border-box !important;
 }
 
-.date-picker-input:focus,
-.react-datepicker__input-container input:focus {
+.date-picker-input:focus, .react-datepicker__input-container input:focus {
   outline: none !important; border-color: var(--color2) !important;
   box-shadow: 0 0 0 4px rgba(110, 198, 255, 0.2) !important;
 }
 
-
 .react-datepicker {
-  background-color: var(--color3) !important; 
-  border: 1px solid rgba(110, 198, 255, 0.3) !important;
-  border-radius: 12px !important;
-  font-family: inherit !important;
+  background-color: var(--color3) !important; border: 1px solid rgba(110, 198, 255, 0.3) !important;
+  border-radius: 12px !important; font-family: inherit !important;
 }
 .react-datepicker__header { background-color: rgba(0, 0, 0, 0.3) !important; border-bottom: 1px solid rgba(110, 198, 255, 0.1) !important; }
 .react-datepicker__current-month, .react-datepicker__day-name { color: var(--white) !important; }
@@ -305,8 +308,3 @@
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-@media (max-width: 768px) {
-  .modal-content { padding: 1.5rem; }
-  .modal-header h3 { font-size: 1.5rem; }
-}
