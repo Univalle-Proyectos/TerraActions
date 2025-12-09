@@ -16,9 +16,10 @@ export class ReservaController {
 
 
     static async crearReservaDirecta(req: Request, res: Response): Promise<void> {
-        
+
         const { id_libro, ci_cliente } = req.body;
         if (!id_libro || !ci_cliente) {
+            
             res.status(400).json({
                 success: false,
                 message: 'Los campos id_libro y ci_cliente son requeridos'
