@@ -1,18 +1,18 @@
 .libro-carousel-container {
   position: relative;
   max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 50px;
+  margin: 1rem auto;
+  padding: 0; 
   background: linear-gradient(to right, rgba(42, 32, 50, 0.05), rgba(0, 41, 132, 0.05), rgba(42, 32, 50, 0.05));
   border-radius: 16px;
-  padding-top: 30px;
-  padding-bottom: 30px;
+  padding-top: 15px;
+  padding-bottom: 15px;
 }
 
 .loading, .error, .empty {
   text-align: center;
   padding: 2rem;
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: rgba(42, 32, 50, 0.7);
 }
 
@@ -20,8 +20,8 @@
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  gap: 20px;
-  padding: 20px 0;
+  gap: 12px; 
+  padding: 10px 15px; 
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -31,26 +31,32 @@
   display: none;
 }
 
-.libro-card {
+.carousel-card {
   flex: 0 0 auto;
-  width: 180px;
+
+  width: 100px; 
+  min-width: 100px;
+  
   scroll-snap-align: start;
   background: #FFFFFF;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 41, 132, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 41, 132, 0.15);
   transition: all 0.3s ease;
-  border-bottom: 3px solid #6EC6FF;
+  border-bottom: 2px solid #6EC6FF;
+  display: flex;
+  flex-direction: column;
 }
 
-.libro-card:hover {
-  transform: translateY(-5px) rotate(1deg);
-  box-shadow: 0 8px 20px rgba(0, 41, 132, 0.25);
+.carousel-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 41, 132, 0.2);
   border-bottom-color: #002984;
 }
 
-.portada-container {
-  height: 220px;
+.carousel-portada-container {
+  height: 150px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,140 +65,126 @@
   position: relative;
 }
 
-.portada-container::after {
+.carousel-portada-container::after {
   content: '';
   position: absolute;
   top: 0;
   right: 0;
-  width: 30px;
-  height: 30px;
+  width: 20px;
+  height: 20px;
   background: #002984;
   clip-path: polygon(100% 0, 0 0, 100% 100%);
   opacity: 0.8;
 }
 
-.portada-img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 6px rgba(42, 32, 50, 0.2));
+.carousel-portada-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.libro-card:hover .portada-img {
+.carousel-card:hover .carousel-portada-img {
   transform: scale(1.05);
 }
 
-.libro-info {
-  padding: 12px;
+.carousel-info {
+  padding: 6px 4px;
   text-align: center;
   background: #FFFFFF;
   border-top: 1px solid rgba(110, 198, 255, 0.3);
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.libro-titulo {
-  margin: 0 0 5px 0;
-  font-size: 14px;
-  font-weight: 600;
+.carousel-titulo {
+  margin: 0 0 2px 0;
+  font-size: 10px; 
+  font-weight: 700;
   color: #002984;
+  
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.1;
+}
+
+.carousel-editorial {
+  margin: 0;
+  font-size: 9px;
+  color: rgba(42, 32, 50, 0.7);
+  font-style: italic;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
-  padding-bottom: 8px;
 }
 
-.libro-titulo::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30px;
-  height: 2px;
-  background: #2A2032;
-  border-radius: 2px;
-}
-
-.libro-editorial {
-  margin: 0;
-  font-size: 12px;
-  color: rgba(42, 32, 50, 0.7);
-  font-style: italic;
-}
-
+/* BOTONES */
 .carousel-button {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: #FFFFFF;
-  border: 2px solid #002984;
-  width: 40px;
-  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #002984;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 41, 132, 0.2);
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   color: #002984;
-  transition: all 0.2s ease;
 }
 
-.carousel-button.left {
-  left: 0;
-}
+.carousel-button.left { left: 5px; }
+.carousel-button.right { right: 5px; }
 
-.carousel-button.right {
-  right: 0;
-}
-
-.carousel-button:hover {
-  background: #002984;
-  color: #FFFFFF;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.carousel-button:active {
-  transform: translateY(-50%) scale(0.95);
-}
-
-
-.libro-card::before {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: #2A2032;
-  color: #FFFFFF;
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  z-index: 5;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .libro-carousel-container {
-    padding: 0 30px;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding: 0 50px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    margin: 3rem auto;
+  }
+
+  .libro-carousel {
+    gap: 20px;
+    padding: 20px 0;
+  }
+
+  .carousel-card {
+    width: 170px; 
+    min-width: 170px;
+    border-radius: 8px;
+  }
+
+  .carousel-portada-container {
+    height: 250px; 
   }
   
-  .libro-card {
-    width: 150px;
+  .carousel-titulo {
+    font-size: 14px;
   }
   
-  .portada-container {
-    height: 180px;
+  .carousel-editorial {
+    font-size: 12px;
   }
   
   .carousel-button {
-    width: 35px;
-    height: 35px;
-    font-size: 18px;
+    width: 45px;
+    height: 45px;
+    font-size: 24px;
+    left: -20px;
+  }
+  
+  .carousel-button.right {
+    right: -20px;
+    left: auto;
   }
 }

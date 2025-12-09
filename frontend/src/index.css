@@ -3,4 +3,10 @@ html, body {
   padding: 0;
   width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden; 
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
 }

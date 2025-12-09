@@ -1,6 +1,10 @@
 .autor-card {
   flex: 0 0 auto;
-  width: 280px;
+  width: 100%;
+
+  max-width: 240px; 
+  margin: 0 auto; 
+  
   scroll-snap-align: start;
   background: #FFFFFF;
   border-radius: 10px;
@@ -9,6 +13,9 @@
   border: 2px solid rgba(110, 198, 255, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
 }
 
 .autor-card:hover {
@@ -30,64 +37,99 @@
   font-size: 2rem;
   font-weight: bold;
   box-shadow: 0 2px 4px rgba(42, 32, 50, 0.2);
+  flex-shrink: 0;
 }
 
 .autor-info {
-  padding: 0 20px 20px;
+  padding: 0 15px 20px;
   text-align: center;
   background: linear-gradient(180deg, #FFFFFF 0%, rgba(110, 198, 255, 0.05) 100%);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .autor-nombre {
-  margin: 0 0 10px 0;
-  font-size: 1.2rem;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
   color: #2A2032;
   font-weight: 600;
+  
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.4em; 
+  line-height: 1.2;
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .autor-nacionalidad {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   font-size: 0.9rem;
   color: #002984;
   font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .autor-vida {
-  margin: 0 0 15px 0;
-  font-size: 0.9rem;
+  margin: 0 0 12px 0;
+  font-size: 0.8rem;
   color: #002984;
   font-weight: 500;
   background: rgba(110, 198, 255, 0.1);
-  padding: 5px 10px;
-  border-radius: 15px;
+  padding: 4px 8px;
+  border-radius: 12px;
   display: inline-block;
+  align-self: center;
 }
 
 .autor-biografia {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #2A2032;
-  line-height: 1.5;
+  line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-@media (max-width: 768px) {
+/* MÓVIL OPTIMIZADO */
+@media (max-width: 640px) {
   .autor-card {
-    width: 220px;
-  }
-}
-
-@media (max-width: 480px) {
-  .autor-card {
-    width: 200px;
+    max-width: none; 
   }
   
   .autor-avatar {
     width: 60px;
     height: 60px;
     font-size: 1.5rem;
+    margin: 15px auto;
+  }
+  
+  .autor-info {
+    padding: 0 10px 15px;
+  }
+  
+  .autor-nombre {
+    font-size: 0.95rem;
+    min-height: 2.2em;
+  }
+  
+  .autor-nacionalidad {
+    font-size: 0.8rem;
+  }
+  
+  .autor-biografia {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2; /* Menos texto en móvil */
   }
 }

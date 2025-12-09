@@ -1,7 +1,8 @@
-import { faEdit, faEnvelope, faMapMarkerAlt, faPhone, faSave, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faEnvelope, faMapMarkerAlt, faPhone, faSave, faTimes, faUser, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState } from 'react';
 import './Miperfil.css';
+const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 interface Cliente {
   usuario: string;
@@ -41,6 +42,7 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
   const guardarCambios = () => {
     console.log("Guardando cambios:", datos);
     setEditando(false);
+
   };
 
   const cancelarEdicion = () => {
@@ -57,7 +59,7 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
             className="editar-btn"
             onClick={() => setEditando(true)}
           >
-            <FontAwesomeIcon icon={faEdit} /> Editar
+            <FontAwesomeIcon icon={faEdit} /> Editar Perfil
           </button>
         ) : (
           <div className="acciones-btns">
@@ -72,19 +74,26 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
       </div>
 
       <div className="perfil-content">
+
         <div className="foto-perfil">
           <div className="foto-container">
-            {foto ? (
-              <img src={foto} alt="Foto de perfil" className="foto-usuario" />
-            ) : (
-              <div className="foto-placeholder">
-                <FontAwesomeIcon icon={faUser} size="3x" />
-              </div>
-            )}
+
+            <img 
+              src={foto || DEFAULT_AVATAR} 
+              alt="Foto de perfil" 
+              className="foto-usuario"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null; 
+                target.src = DEFAULT_AVATAR;
+              }}
+            />
           </div>
+          
           {editando && (
             <div className="cambiar-foto">
               <label htmlFor="foto-input" className="foto-label">
+                <FontAwesomeIcon icon={faEdit} style={{marginRight: '5px'}}/>
                 Cambiar foto
               </label>
               <input
@@ -99,10 +108,10 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
         </div>
 
         <div className="info-perfil">
-          <div className="campo-perfil">
+          <div className={`campo-perfil ${editando ? 'editando' : ''}`}>
             <label>
               <FontAwesomeIcon icon={faUser} className="icono-campo" />
-              Nombre de usuario:
+              Nombre de usuario
             </label>
             {editando ? (
               <input
@@ -113,14 +122,14 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
                 className="input-editable"
               />
             ) : (
-              <span>{datos.usuario}</span>
+              <span className="valor-campo">{datos.usuario}</span>
             )}
           </div>
 
-          <div className="campo-perfil">
+          <div className={`campo-perfil ${editando ? 'editando' : ''}`}>
             <label>
               <FontAwesomeIcon icon={faUser} className="icono-campo" />
-              Nombre completo:
+              Nombre completo
             </label>
             {editando ? (
               <input
@@ -131,14 +140,14 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
                 className="input-editable"
               />
             ) : (
-              <span>{datos.nombre}</span>
+              <span className="valor-campo">{datos.nombre}</span>
             )}
           </div>
 
-          <div className="campo-perfil">
+          <div className={`campo-perfil ${editando ? 'editando' : ''}`}>
             <label>
               <FontAwesomeIcon icon={faEnvelope} className="icono-campo" />
-              Email:
+              Email
             </label>
             {editando ? (
               <input
@@ -149,14 +158,14 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
                 className="input-editable"
               />
             ) : (
-              <span>{datos.email}</span>
+              <span className="valor-campo">{datos.email}</span>
             )}
           </div>
 
-          <div className="campo-perfil">
+          <div className={`campo-perfil ${editando ? 'editando' : ''}`}>
             <label>
               <FontAwesomeIcon icon={faPhone} className="icono-campo" />
-              Teléfono:
+              Teléfono
             </label>
             {editando ? (
               <input
@@ -165,17 +174,17 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
                 value={datos.telefono || ''}
                 onChange={handleChange}
                 className="input-editable"
-                placeholder="Agregar teléfono"
+                placeholder="Ej: +591 70000000"
               />
             ) : (
-              <span>{datos.telefono || 'No especificado'}</span>
+              <span className="valor-campo">{datos.telefono || 'No especificado'}</span>
             )}
           </div>
 
-          <div className="campo-perfil">
+          <div className={`campo-perfil ${editando ? 'editando' : ''}`}>
             <label>
               <FontAwesomeIcon icon={faMapMarkerAlt} className="icono-campo" />
-              Dirección:
+              Dirección
             </label>
             {editando ? (
               <input
@@ -184,17 +193,22 @@ const MiPerfil: React.FC<MiPerfilProps> = ({ cliente }) => {
                 value={datos.direccion || ''}
                 onChange={handleChange}
                 className="input-editable"
-                placeholder="Agregar dirección"
+                placeholder="Ingresa tu dirección"
               />
             ) : (
-              <span>{datos.direccion || 'No especificada'}</span>
+              <span className="valor-campo">{datos.direccion || 'No especificada'}</span>
             )}
           </div>
 
           {datos.fechaRegistro && (
             <div className="campo-perfil">
-              <label>Miembro desde:</label>
-              <span>{new Date(datos.fechaRegistro).toLocaleDateString()}</span>
+              <label>
+                <FontAwesomeIcon icon={faCalendarAlt} className="icono-campo" />
+                Miembro desde
+              </label>
+              <span className="valor-campo">
+                {new Date(datos.fechaRegistro).toLocaleDateString()}
+              </span>
             </div>
           )}
         </div>

@@ -294,3 +294,20 @@
   margin-bottom: 24px;
   opacity: 0.8;
 }
+@media (max-width: 480px) {
+  .login-form, .signup-form {
+    padding: 25px 15px; /* Reducir drásticamente el padding */
+    width: 95%; /* Asegurar que no toque los bordes */
+    margin: 20px auto;
+  }
+  
+  .login-form h2, .signup-form h2 {
+    font-size: 1.5rem; /* Texto más pequeño */
+  }
+
+  /* Hacer que los inputs de SignUp sean una sola columna en móvil */
+  .inputs-grid {
+    grid-template-columns: 1fr; 
+    gap: 10px;
+  }
+}

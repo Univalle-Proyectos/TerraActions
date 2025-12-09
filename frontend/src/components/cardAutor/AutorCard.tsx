@@ -13,12 +13,17 @@ const AutorCard: React.FC<AutorCardProps> = ({ autor }) => {
         {getInitials(autor.nombre)}
       </div>
       <div className="autor-info">
-        <h3 className="autor-nombre">{autor.nombre}</h3>
+        <h3 className="autor-nombre" title={autor.nombre}>
+            {autor.nombre}
+        </h3>
+        
         <p className="autor-nacionalidad">{autor.nacionalidad}</p>
+        
         <div className="autor-vida">
           <span>{autor.fechaNac}</span>
           {autor.fechaMuerte && <span> - {autor.fechaMuerte}</span>}
         </div>
+        
         <p className="autor-biografia" title={autor.biografia}>
           {truncateText(autor.biografia, 100)}
         </p>
@@ -28,6 +33,7 @@ const AutorCard: React.FC<AutorCardProps> = ({ autor }) => {
 };
 
 function getInitials(nombre: string): string {
+  if (!nombre) return "?";
   return nombre.split(' ')
     .map(part => part[0])
     .join('')
@@ -44,6 +50,7 @@ function getRandomColor(): string {
 }
 
 function truncateText(text: string, maxLength: number): string {
+  if (!text) return "Sin biografía disponible";
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }

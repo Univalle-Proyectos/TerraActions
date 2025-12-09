@@ -9,13 +9,15 @@ import {
   faRotateRight, 
   faExclamationTriangle, 
   faPen, 
-  faTimes 
+  faTimes,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import './AutorCatalogo.css';
 
 const AutorCatalogo: FC = () => {
   const [autores, setAutores] = useState<Autor[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true); 
+  const [buscando, setBuscando] = useState<boolean>(false); 
   const [error, setError] = useState<string | null>(null);
   const [filtroNombre, setFiltroNombre] = useState<string>('');
   const [autorSeleccionado, setAutorSeleccionado] = useState<Autor | null>(null);
@@ -38,13 +40,9 @@ const AutorCatalogo: FC = () => {
   }, []);
 
   useEffect(() => {
-    console.log("FiltroNombre actualizado:", filtroNombre);
-  }, [filtroNombre]);
-
-  useEffect(() => {
     const filtrarAutores = async () => {
       try {
-        setLoading(true);
+        setBuscando(true);
         setError(null);
         let autoresFiltrados: Autor[] = [];
 
@@ -72,9 +70,14 @@ const AutorCatalogo: FC = () => {
           setError(err instanceof Error ? err.message : 'Error desconocido');
         }
       } finally {
-        setLoading(false);
+        setBuscando(false);
       }
     };
+
+    if (!filtroNombre) {
+        filtrarAutores();
+        return;
+    }
 
     const timer = setTimeout(() => {
       filtrarAutores();
@@ -178,8 +181,15 @@ const AutorCatalogo: FC = () => {
         </div>
       )}
 
-      <div className="results-section">
-        {autores.length > 0 && (
+      {buscando && (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
+            <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+            <p style={{ marginTop: '10px' }}>Buscando...</p>
+        </div>
+      )}
+
+      <div className="results-section" style={{ opacity: buscando ? 0.5 : 1 }}>
+        {!buscando && autores.length > 0 && (
           <div className="results-header">
             <h3 className="results-count">
               {autores.length} {autores.length === 1 ? 'autor encontrado' : 'autores encontrados'}
@@ -187,29 +197,31 @@ const AutorCatalogo: FC = () => {
           </div>
         )}
 
-        <div className="autores-grid">
-          {autores.length > 0 ? (
-            autores.map((autor) => (
-              <div 
-                key={autor.idAutor} 
-                onClick={() => handleCardClick(autor)}
-                className="autor-card-wrapper"
-              >
-                <AutorCard autor={autor} />
-              </div>
-            ))
-          ) : (
-            !error && (
-              <div className="no-results">
-                <div className="no-results-icon">
-                  <FontAwesomeIcon icon={faPen} />
+        {!buscando && (
+            <div className="autores-grid">
+            {autores.length > 0 ? (
+                autores.map((autor, index) => (
+                <div 
+                    key={autor.idAutor || index} 
+                    onClick={() => handleCardClick(autor)}
+                    className="autor-card-wrapper"
+                >
+                    <AutorCard autor={autor} />
                 </div>
-                <h3>Sin resultados</h3>
-                <p>No encontramos autores con ese nombre</p>
-              </div>
-            )
-          )}
-        </div>
+                ))
+            ) : (
+                !error && (
+                <div className="no-results">
+                    <div className="no-results-icon">
+                    <FontAwesomeIcon icon={faPen} />
+                    </div>
+                    <h3>Sin resultados</h3>
+                    <p>No encontramos autores con ese nombre</p>
+                </div>
+                )
+            )}
+            </div>
+        )}
       </div>
     </div>
   );

@@ -10,13 +10,18 @@ import {
   faExclamationTriangle,
   faSearch,
   faFolder,
-  faTimes
+  faTimes,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import './LibroCatalogo.css';
 
 const LibroCatalogo: FC = () => {
   const [libros, setLibros] = useState<Libro[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true); 
+
+
+  
+  const [buscando, setBuscando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [filtroTitulo, setFiltroTitulo] = useState<string>('');
   const [filtroGenero, setFiltroGenero] = useState<string>('');
@@ -24,12 +29,13 @@ const LibroCatalogo: FC = () => {
   const [libroSeleccionado, setLibroSeleccionado] = useState<Libro | null>(null);
   const [isClosing, setIsClosing] = useState<boolean>(false);
 
+
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       try {
         const librosData = await LibroService.getAll();
         setLibros(librosData);
-        const generos = [...new Set(librosData.map(libro => libro.genero))] as string[];
+        const generos = [...new Set(librosData.map(libro => libro.genero).filter(Boolean))] as string[];
         setGenerosDisponibles(generos);
         setError(null);
       } catch (err) {
@@ -39,14 +45,13 @@ const LibroCatalogo: FC = () => {
       }
     };
 
-
     cargarDatosIniciales();
   }, []);
 
   useEffect(() => {
     const filtrarLibros = async () => {
       try {
-        setLoading(true);
+        setBuscando(true); 
         setError(null);
         let librosFiltrados: Libro[] = [];
 
@@ -54,7 +59,7 @@ const LibroCatalogo: FC = () => {
           try {
             librosFiltrados = await LibroService.getByTitulo(filtroTitulo);
             if (librosFiltrados.length === 0) {
-              setError(`No se encontraron libros con el título 11/11 "${filtroTitulo}"`);
+              setError(`No se encontraron libros con el título "${filtroTitulo}"`);
             }
           } catch (err) {
             if (err instanceof Error && err.message.includes('404')) {
@@ -88,9 +93,14 @@ const LibroCatalogo: FC = () => {
           setError(err instanceof Error ? err.message : 'Error desconocido');
         }
       } finally {
-        setLoading(false);
+        setBuscando(false); 
       }
     };
+
+    if (!filtroTitulo && !filtroGenero) {
+         filtrarLibros();
+         return;
+    }
 
     const timer = setTimeout(() => {
       filtrarLibros();
@@ -129,7 +139,7 @@ const LibroCatalogo: FC = () => {
     formData.append('file', file);
 
     try {
-      setLoading(true);
+      setBuscando(true); 
       setError(null);
 
       const response = await fetch('https://api.ocr.space/parse/image', {
@@ -146,10 +156,10 @@ const LibroCatalogo: FC = () => {
       }
 
      const tituloExtraido = parsedText
-  .split('\n')
-  .map((line: string) => line.trim())
-  .filter((line: string) => line.length > 0)[0];
-      console.log(tituloExtraido)
+      .split('\n')
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0)[0];
+      
       if (tituloExtraido) {
         setFiltroTitulo(tituloExtraido);
         setFiltroGenero('');
@@ -159,9 +169,11 @@ const LibroCatalogo: FC = () => {
     } catch (err) {
       setError('Error al procesar la imagen');
     } finally {
-      setLoading(false);
+      setBuscando(false);
     }
   };
+
+
   if (loading) {
     return (
       <div className="libro-catalogo-container">
@@ -240,8 +252,8 @@ const LibroCatalogo: FC = () => {
               className="select-field"
             >
               <option value="">Todos los géneros</option>
-              {generosDisponibles.map((genero) => (
-                <option key={genero} value={genero}>
+              {generosDisponibles.map((genero, index) => (
+                <option key={genero || index} value={genero}>
                   {genero}
                 </option>
               ))}
@@ -286,8 +298,15 @@ const LibroCatalogo: FC = () => {
         </div>
       )}
 
-      <div className="results-section">
-        {libros.length > 0 && (
+      {buscando && (
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
+            <FontAwesomeIcon icon={faSpinner} spin size="2x" />
+            <p style={{ marginTop: '10px' }}>Buscando...</p>
+        </div>
+      )}
+
+      <div className="results-section" style={{ opacity: buscando ? 0.5 : 1 }}>
+        {!buscando && libros.length > 0 && (
           <div className="results-header">
             <h3 className="results-count">
               {libros.length} {libros.length === 1 ? 'libro encontrado' : 'libros encontrados'}
@@ -295,29 +314,31 @@ const LibroCatalogo: FC = () => {
           </div>
         )}
 
-        <div className="libros-grid">
-          {libros.length > 0 ? (
-            libros.map((libro) => (
-              <div
-                key={libro.idLibro}
-                onClick={() => handleCardClick(libro)}
-                className="libro-card-wrapper"
-              >
-                <LibroCard libro={libro} />
-              </div>
-            ))
-          ) : (
-            !error && (
-              <div className="no-results">
-                <div className="no-results-icon">
-                  <FontAwesomeIcon icon={faBook} />
+        {!buscando && (
+            <div className="libros-grid">
+            {libros.length > 0 ? (
+                libros.map((libro, index) => (
+                <div
+                    key={libro.idLibro || index}
+                    onClick={() => handleCardClick(libro)}
+                    className="libro-card-wrapper"
+                >
+                    <LibroCard libro={libro} />
                 </div>
-                <h3>Sin resultados</h3>
-                <p>Prueba con otros términos de búsqueda</p>
-              </div>
-            )
-          )}
-        </div>
+                ))
+            ) : (
+                !error && (
+                <div className="no-results">
+                    <div className="no-results-icon">
+                    <FontAwesomeIcon icon={faBook} />
+                    </div>
+                    <h3>Sin resultados</h3>
+                    <p>Prueba con otros términos de búsqueda</p>
+                </div>
+                )
+            )}
+            </div>
+        )}
       </div>
     </div>
   );

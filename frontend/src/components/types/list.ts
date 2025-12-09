@@ -7,19 +7,20 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faEnvelope } from '@fortawesome/free-regular-svg-icons';
 
-
 export type NavItem = {
   id: string;
   label: string;
-  href: string;
+  href?: string; 
   icon?: IconDefinition;
+  onClick?: () => void; 
 };
 
 export interface NavBarProps {
   items: NavItem[];
-  logo: string;
+  logo?: string;
   logoAlt?: string;
   className?: string;
+  username?: string; 
 }
 
 export const socialItems: NavItem[] = [

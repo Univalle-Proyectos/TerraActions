@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LibroService } from '../../services/LibroService';
 import type { Libro } from '../../../../backend/Models/Libro';
 import './LibroCarousel.css';
-import logazo from '../../assets/logazo.png'
+import logazo from '../../assets/logazo.png';
+
 const LibroCarousel: React.FC = () => {
   const [libros, setLibros] = useState<Libro[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -26,13 +27,13 @@ const LibroCarousel: React.FC = () => {
 
   const scrollLeft = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
     }
   };
 
@@ -45,22 +46,25 @@ const LibroCarousel: React.FC = () => {
       <button onClick={scrollLeft} className="carousel-button left">‹</button>
       
       <div className="libro-carousel" ref={carouselRef}>
-        {libros.map((libro) => (
-          <div key={libro.idLibro} className="libro-card">
-            <div className="portada-container">
+        {libros.map((libro, index) => (
+          <div 
+            key={libro.idLibro || index} 
+            className="carousel-card" 
+          >
+            <div className="carousel-portada-container">
               <img 
                 src={libro.portada || logazo} 
                 alt={`Portada de ${libro.titulo}`}
-                className="portada-img"
+                className="carousel-portada-img"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = '/default-book-cover.jpg';
                 }}
               />
             </div>
-            <div className="libro-info">
-              <h3 className="libro-titulo">{libro.titulo}</h3>
-              <p className="libro-editorial">{libro.editorial}</p>
+            <div className="carousel-info">
+              <h3 className="carousel-titulo">{libro.titulo}</h3>
+              <p className="carousel-editorial">{libro.editorial}</p>
             </div>
           </div>
         ))}

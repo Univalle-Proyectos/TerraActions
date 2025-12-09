@@ -16,7 +16,6 @@ const AutorCarousel: React.FC = () => {
         setAutores(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error al cargar autores');
-        console.error('Error fetching autores:', err);
       } finally {
         setLoading(false);
       }
@@ -27,13 +26,13 @@ const AutorCarousel: React.FC = () => {
 
   const scrollLeft = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: -200, behavior: 'smooth' });
     }
   };
 
   const scrollRight = () => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+      carouselRef.current.scrollBy({ left: 200, behavior: 'smooth' });
     }
   };
 
@@ -48,20 +47,19 @@ const AutorCarousel: React.FC = () => {
         <button onClick={scrollLeft} className="carousel-button left" aria-label="Anterior">‹</button>
         
         <div className="autor-carousel" ref={carouselRef}>
-          {autores.map((autor) => (
-            <div key={autor.idAutor} className="autor-card">
-              <div className="autor-avatar" style={{ backgroundColor: getRandomColor() }}>
+          {autores.map((autor, index) => (
+            <div 
+                key={autor.idAutor || index} 
+                className="carousel-autor-card"
+            >
+              <div className="carousel-autor-avatar" style={{ backgroundColor: getRandomColor() }}>
                 {getInitials(autor.nombre)}
               </div>
-              <div className="autor-info">
-                <h3 className="autor-nombre">{autor.nombre}</h3>
-                <p className="autor-nacionalidad">{autor.nacionalidad}</p>
-                <div className="autor-vida">
-                  <span>{autor.fechaNac}</span>
-                  {autor.fechaMuerte && <span> - {autor.fechaMuerte}</span>}
-                </div>
-                <p className="autor-biografia" title={autor.biografia}>
-                  {truncateText(autor.biografia, 100)}
+              <div className="carousel-autor-info">
+                <h3 className="carousel-autor-nombre">{autor.nombre}</h3>
+                <p className="carousel-autor-nacionalidad">{autor.nacionalidad}</p>
+                <p className="carousel-autor-biografia">
+                  {truncateText(autor.biografia, 60)}
                 </p>
               </div>
             </div>
@@ -75,6 +73,7 @@ const AutorCarousel: React.FC = () => {
 };
 
 function getInitials(nombre: string): string {
+  if (!nombre) return "?";
   return nombre.split(' ')
     .map(part => part[0])
     .join('')
@@ -91,6 +90,7 @@ function getRandomColor(): string {
 }
 
 function truncateText(text: string, maxLength: number): string {
+  if (!text) return "";
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 }

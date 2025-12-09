@@ -7,6 +7,32 @@
   --color3: #2A2032;
   --color4:#FFFAF0;
 }
-*{
+
+* {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+.home-container {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  
+
+  padding-top: 80px; 
+}
+
+.home-content {
+  width: 100%;
+  transition: margin-left 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .home-content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+  }
 }

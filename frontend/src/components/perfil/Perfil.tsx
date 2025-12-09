@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { NavBar } from "../navBar/navBar";
 import logo from '../../assets/logazo.png'; 
 import { faHome, faUser, faBookReader, faSignOutAlt, faFeather, faNoteSticky } from '@fortawesome/free-solid-svg-icons';
-import { SideBar } from "../sideBar/sideBar";
 import './Perfil.css';
 import LibroCatalogo from "../catalogoLibro/LibroCatalogo";
 import { fetchApi } from "../../services/api";
 import MiPerfil from "../miPerfil/MiPerfil";
 import AutorCatalogo from "../catalogoAutor/AutorCatalogo";
 import ReservaCatalogo from "../catalogoReservas/CatalogoReservas";
+import type { NavItem } from "../types/list";
 
 const Perfil = () => {
   const [cliente, setCliente] = useState<any>(null);
@@ -24,17 +24,26 @@ const Perfil = () => {
         setCliente(data.cliente);
         setComponenteActual(<MiPerfil cliente={data.cliente} />);
       } catch (error: any) {
-        setMensaje(error.message || "No autorizado");
+        console.error("Error de sesión:", error);
+        setMensaje("Sesión expirada o inválida. Redirigiendo...");
+        
+        localStorage.removeItem("token");
+        setTimeout(() => {
+            navigate("/login");
+        }, 2000); 
       }
     };
 
     fetchPerfil();
-  }, []);
+  }, [navigate]);
 
   const mostrarComponente = (id: string) => {
     if (!cliente) return;
 
     switch(id) {
+      case "0":
+        navigate('/');
+        break;
       case "1":
         setComponenteActual(<MiPerfil cliente={cliente} />);
         break;
@@ -55,11 +64,18 @@ const Perfil = () => {
     }
   };
 
-  const navItems = [
-    { id: '1', label: 'Inicio', href: '/', icon: faHome },
-  ];
+  const logout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
-  const sideBarItems = [
+ const menuItems: NavItem[] = [
+    { 
+      id: '0', 
+      label: 'Inicio', 
+      icon: faHome,
+      onClick: () => mostrarComponente('0')
+    },
     { 
       id: '1', 
       label: 'Mi Perfil', 
@@ -92,29 +108,29 @@ const Perfil = () => {
     },
   ];
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  if (mensaje) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#fff', background: '#000' }}>
+        <h2>{mensaje}</h2>
+    </div>
+  );
 
-  if (mensaje) return <p>{mensaje}</p>;
-  if (!cliente) return <p>Cargando...</p>;
+  if (!cliente) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#fff', background: '#000' }}>
+        <h2>Cargando perfil...</h2>
+    </div>
+  );
 
   return (
     <div className="page-container">
       <NavBar
-        items={navItems}
+        items={menuItems}
         logo={logo}
         logoAlt="Logo de la aplicación"
         className="home-navbar"
+        username={cliente.usuario}
       />
       
       <div className="content-container">
-        <SideBar 
-          username={cliente.usuario} 
-          items={sideBarItems} 
-        />
-        
         <main className="main-content">
           {componenteActual}
         </main>
