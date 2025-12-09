@@ -13,6 +13,7 @@ export class PersonaController {
             res.status(500).json({ error: "Fallo al obtener personas" });
         }
     }
+    
 
     static async getPersonaById(req: Request, res: Response): Promise<void> {
         const { id } = req.params;
