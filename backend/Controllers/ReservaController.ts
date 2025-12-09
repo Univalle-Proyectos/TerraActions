@@ -13,9 +13,10 @@ export class ReservaController {
             res.status(500).json({ error: "Fallo al obtener reservas" });
         }
     }
-    
+
 
     static async crearReservaDirecta(req: Request, res: Response): Promise<void> {
+        
         const { id_libro, ci_cliente } = req.body;
         if (!id_libro || !ci_cliente) {
             res.status(400).json({
