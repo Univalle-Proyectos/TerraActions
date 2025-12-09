@@ -3,6 +3,7 @@ import { Cliente } from "../Models/Cliente";
 import { supabase } from "../src/Config/supabase";
 
 
+
 export class ClienteController {
   static async getCliente(req: Request, res: Response): Promise<void> {
     try {
