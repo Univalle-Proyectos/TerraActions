@@ -3,6 +3,7 @@ import { supabase } from "../src/Config/supabase";
 import { AdministradorFunc } from "../Models/Administrador";
 
 
+
 export class AdministradorController {
     static async getAll(req: Request, res: Response): Promise<void> {
         try {
