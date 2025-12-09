@@ -15,6 +15,7 @@ export class ClienteController {
       res.status(500).json({ error: "Fallo al obtener clientes" });
     }
   }
+  
 
   static async getClienteId(req: Request, res: Response): Promise<void> {
     const { ci } = req.params;
