@@ -2,8 +2,8 @@
   --black: #000000;
   --white: #ffffff;
   --gray: rgba(255, 255, 255, 0.53);
-  --color1: #b71c1c; /* rojo oscuro */
-  --color2: #ef5350; /* Red 400 */
+  --color1: #002984;
+  --color2: #6ec6ff;
   --color3: #2a2032;
   --color4: #fffaf0;
 }
@@ -21,7 +21,7 @@
     z-index: 3010; 
     background: transparent; 
     color: var(--white);
-    border: 1px solid rgba(239, 83, 80, 0.3);
+    border: 1px solid rgba(110, 198, 255, 0.3);
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
@@ -31,13 +31,14 @@
 }
 
 .sidebar-toggle:hover {
-    background: rgba(239, 83, 80, 0.15);
+    background: rgba(110, 198, 255, 0.15);
     border-color: var(--color2);
     transform: scale(1.05);
 }
 
 .toggle-glow { display: none; }
 
+/* SIDEBAR FLEX CONTAINER */
 .sidebar {
     width: 280px;
     background: linear-gradient(180deg, var(--color3) 0%, var(--black) 100%);
@@ -55,11 +56,11 @@
     
     z-index: 3000;
     padding-top: 0;
-    border-right: 1px solid rgba(239, 83, 80, 0.2);
+    border-right: 1px solid rgba(110, 198, 255, 0.2);
     backdrop-filter: blur(10px);
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
     overflow-y: auto;
-    overscroll-behavior: contain;
+    overscroll-behavior: contain; 
 }
 
 .sidebar.open {
@@ -72,7 +73,7 @@
 
 .sidebar-header {
     padding: 1.5rem;
-    border-bottom: 1px solid rgba(239, 83, 80, 0.2);
+    border-bottom: 1px solid rgba(110, 198, 255, 0.2);
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -84,7 +85,7 @@
     width: 45px; height: 45px;
     background: linear-gradient(135deg, var(--color1) 0%, var(--color2) 100%);
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 15px rgba(239, 83, 80, 0.3);
+    box-shadow: 0 4px 15px rgba(110, 198, 255, 0.3);
 }
 
 .avatar-icon { font-size: 1.2rem; color: var(--white); }
@@ -112,7 +113,7 @@
     display: flex;
     align-items: center;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(239, 83, 80, 0.05);
+    border: 1px solid rgba(110, 198, 255, 0.05);
     border-radius: 10px;
     transition: all 0.3s ease;
 }
@@ -120,7 +121,7 @@
 .item-content-link { text-decoration: none; color: inherit; display: block; }
 
 .sidebar-item:hover .item-content {
-    background: rgba(239, 83, 80, 0.1);
+    background: rgba(110, 198, 255, 0.1);
     transform: translateX(5px);
 }
 
@@ -131,10 +132,11 @@
 
 .sidebar-label { font-size: 1rem; font-weight: 500; color: var(--white); }
 
+/* FOOTER - ZONA DEL BOTÓN CERRAR SESIÓN */
 .sidebar-footer {
     position: relative;
-    width: 100%;
-    padding: 1rem 0 1.5rem 0;
+    width: 100%;    padding: 1rem 0 5rem 0; 
+    
     background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
     display: flex;
     flex-direction: column;
@@ -167,10 +169,11 @@
 .footer-decoration {
     width: 80%;
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(239, 83, 80, 0.3) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(110, 198, 255, 0.3) 50%, transparent 100%);
     margin-top: 1rem;
 }
 
+/* OVERLAY */
 .sidebar-overlay {
     position: fixed;
     top: 80px; 
@@ -181,20 +184,30 @@
     z-index: 2999;
     backdrop-filter: blur(3px);
     animation: fadeIn 0.3s ease;
-    
-    touch-action: none;
-    overscroll-behavior: contain;
+    touch-action: none; 
+    overscroll-behavior: contain; 
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+/* ESCRITORIO */
 @media (min-width: 768px) {
-    .sidebar-toggle { display: none; }
+    .sidebar-toggle {
+        display: none;
+    }
+
     .sidebar {
         transform: translateX(0) !important; 
         box-shadow: none; 
-        border-right: 1px solid rgba(239, 83, 80, 0.15);
+        border-right: 1px solid rgba(110, 198, 255, 0.15);
         width: 280px;
     }
-    .sidebar-overlay { display: none !important; }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    .sidebar-footer {
+        padding-bottom: 2rem;
+    }
 }
