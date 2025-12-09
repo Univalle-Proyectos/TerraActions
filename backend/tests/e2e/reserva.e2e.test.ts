@@ -17,7 +17,7 @@ describe('ReservaController - E2E Tests', () => {
             .maybeSingle();
 
         if (!clienteExiste) throw new Error(`Cliente ${testClienteCi} no existe en la BD.`);
-        testLibroId = 17;
+        testLibroId = 6;
     });
 
     afterAll(async () => {

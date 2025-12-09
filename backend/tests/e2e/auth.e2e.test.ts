@@ -50,6 +50,11 @@ describe('Auth E2E Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
   });
 
+  afterAll(async () => {
+    console.log('🧹 Limpiando datos de prueba...');
+    await supabase.from('cliente').delete().eq('ci_cliente', testUsers.valid.ci_cliente);
+    await supabase.from('cliente').delete().eq('ci_cliente', testUsers.another.ci_cliente);
+  });
 
   describe('Escenario completo de autenticación', () => {
     it('debería rechazar acceso sin autenticación', async () => {
