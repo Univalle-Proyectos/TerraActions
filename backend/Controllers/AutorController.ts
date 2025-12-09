@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { supabase } from "../src/Config/supabase";
 import { AutorFunc } from "../Models/Autor";
 
+
 export class AutorController {
   static async getAutor(req: Request, res: Response): Promise<void> {
     try {
