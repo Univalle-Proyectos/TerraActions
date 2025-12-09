@@ -1,0 +1,223 @@
+name: Deploy WebBiblioteca con Terraform
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  # Job  1: Obtener IP antes de construir imágenes
+  get-infrastructure:
+    name: Get or Create Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      vm_public_ip: ${{ steps.get_ip.outputs.public_ip }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.2
+          terraform_wrapper: false
+
+      - name: Crear archivo de clave privada OCI
+        run: |
+          mkdir -p ~/.oci
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Apply para obtener IP
+        id: get_ip
+        working-directory: ./terraform
+        env:
+          TF_VAR_tenancy_ocid: ${{ secrets.TENANCY_OCID }}
+          TF_VAR_user_ocid: ${{ secrets.USER_OCID }}
+          TF_VAR_fingerprint: ${{ secrets.FINGERPRINT }}
+          TF_VAR_private_key_path: ~/.oci/oci_api_key.pem
+          TF_VAR_region: ${{ secrets.REGION }}
+          TF_VAR_compartment_ocid: ${{ secrets.COMPARTMENT_OCID }}
+          TF_VAR_subnet_id: ${{ secrets.SUBNET_ID }}
+          TF_VAR_availability_domain: ${{ secrets.AVAILABILITY_DOMAIN }}
+          TF_VAR_ubuntu_image_ocid: ${{ secrets.UBUNTU_IMAGE_OCID }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_docker_user: ${{ secrets.DOCKER_USER }}
+          TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+          TF_VAR_supa_anon_key: ${{ secrets.SUPA_ANON_KEY }}
+          TF_VAR_supa_base_url: ${{ secrets.SUPA_BASE_URL }}
+        run: |
+          terraform apply -auto-approve
+          PUBLIC_IP=$(terraform output -raw public_ip)
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "✅ IP Pública obtenida: $PUBLIC_IP"
+
+  # Job 2: Construir y subir imágenes Docker (ahora con la IP correcta)
+  build-and-push:
+    name: Build and Push Docker Images
+    needs: get-infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login a Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build y Push Backend
+        run: |
+          docker build -f backend/Dockerfile \
+            -t ${{ secrets.DOCKER_USER }}/webbiblioteca-backend:latest \
+            ./backend
+          docker push ${{ secrets.DOCKER_USER }}/webbiblioteca-backend:latest
+
+      - name: Build y Push Frontend con IP correcta
+        run: |
+          PUBLIC_IP="${{ needs.get-infrastructure.outputs.vm_public_ip }}"
+          echo "🔧 Construyendo frontend con API URL: http://${PUBLIC_IP}:5000/api"
+          
+          docker build -f frontend/Dockerfile \
+            --build-arg VITE_API_BASE_URL=http://${PUBLIC_IP}:5000/api \
+            -t ${{ secrets.DOCKER_USER }}/webbiblioteca-frontend:latest \
+            ./frontend
+          
+          docker push ${{ secrets.DOCKER_USER }}/webbiblioteca-frontend:latest
+          echo "✅ Frontend construido y subido con API URL: http://${PUBLIC_IP}:5000/api"
+
+      - name: Docker Logout
+        run: docker logout
+
+  # Job 3: Esperar que la VM esté lista
+  wait-for-vm:
+    name: Wait for VM to be ready
+    needs: [get-infrastructure, build-and-push]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Esperar a que la VM esté lista
+        run: |
+          echo "⏳ Esperando 60 segundos para que la VM termine de inicializarse..."
+          sleep 60
+
+  # Job 4: Configurar y desplegar contenedores en la VM
+  deploy-containers:
+    name: Deploy Containers to VM
+    needs: [get-infrastructure, build-and-push, wait-for-vm]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Crear clave SSH privada
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ needs.get-infrastructure.outputs.vm_public_ip }} >> ~/.ssh/known_hosts
+
+      - name: Copiar archivos de despliegue a la VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ needs.get-infrastructure.outputs.vm_public_ip }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "scripts/,docker-compose.yml"
+          target: "/home/ubuntu/deploy"
+
+      - name: Configurar Docker y desplegar contenedores
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ needs.get-infrastructure.outputs.vm_public_ip }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            DEPLOY_PATH="/home/ubuntu/deploy"
+            cd $DEPLOY_PATH
+
+            # Esperar a que no haya procesos de apt ni locks activos
+            MAX_RETRIES=12
+            COUNT=0
+            while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || ps aux | grep -E 'apt|dpkg' | grep -v grep >/dev/null 2>&1; do
+                COUNT=$((COUNT + 1))
+                if [ $COUNT -gt $MAX_RETRIES ]; then
+                    exit 1
+                fi
+                sleep 5
+            done
+
+            chmod +x scripts/*.sh
+
+            if ! command -v docker &> /dev/null; then
+                sudo $DEPLOY_PATH/scripts/setup_docker.sh
+            fi
+
+            sleep 10
+
+            cat > $DEPLOY_PATH/.env <<EOF
+            DOCKER_USER=${{ secrets.DOCKER_USER }}
+            PORT=5000
+            NODE_ENV=production
+            FRONTEND_URL=http://${{ needs.get-infrastructure.outputs.vm_public_ip }}
+            SUPA_BASE_URL=${{ secrets.SUPA_BASE_URL }}
+            SUPA_ANON_KEY=${{ secrets.SUPA_ANON_KEY }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+
+            echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+            sudo docker compose -f $DEPLOY_PATH/docker-compose.yml down || true
+            sudo docker compose -f $DEPLOY_PATH/docker-compose.yml pull
+            sudo docker compose -f $DEPLOY_PATH/docker-compose.yml up -d --force-recreate
+            sudo docker logout
+
+            sleep 20
+
+            # Ejecutar verificación de servicios
+            $DEPLOY_PATH/scripts/check_health.sh
+
+            # Abrir puertos según el tipo de contenedor
+            sudo $DEPLOY_PATH/scripts/open_ports.sh backend || true
+            sudo $DEPLOY_PATH/scripts/open_ports.sh frontend || true
+
+            # Verificación final de puertos y servicio
+            sudo $DEPLOY_PATH/scripts/check_ports.sh
+
+      - name: Notificar despliegue exitoso por email
+        if: success()
+        uses: dawidd6/action-send-mail@v6
+        with:
+          connection_url: smtp+starttls://${{ secrets.EMAIL_USER }}:${{ secrets.EMAIL_PASSWORD }}@smtp.gmail.com:465
+          subject: "✅ WebBiblioteca desplegada exitosamente"
+          body: |
+            🎉 La aplicación WebBiblioteca ha sido desplegada exitosamente!
+            📍 Acceso a los servicios:
+            - Frontend: http://${{ needs.get-infrastructure.outputs.vm_public_ip }}
+            - Backend API: http://${{ needs.get-infrastructure.outputs.vm_public_ip }}:5000/api
+            🔧 Commit: ${{ github.sha }}
+            👤 Por: ${{ github.actor }}
+          to: molinafranz943@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
+
+      - name: Notificar fallo por email
+        if: failure()
+        uses: dawidd6/action-send-mail@v6
+        with:
+          connection_url: smtp+starttls://${{ secrets.EMAIL_USER }}:${{ secrets.EMAIL_PASSWORD }}@smtp.gmail.com:465
+          subject: "❌ Error en despliegue de WebBiblioteca"
+          body: |
+            ❌ El despliegue de WebBiblioteca ha fallado. Por favor revisa los logs en GitHub Actions:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: molinafranz943@gmail.com
+          from: ${{ secrets.EMAIL_USER }}
